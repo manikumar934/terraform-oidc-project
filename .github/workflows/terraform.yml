@@ -1,0 +1,66 @@
+name: Terraform CI/CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Select Environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - uat
+          - prod
+
+      action:
+        description: "Select Action"
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::427814062472:role/github-terraform-oidc-role
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: |
+          cd environments/${{ github.event.inputs.environment }}
+          terraform init
+
+      - name: Terraform Plan
+        if: github.event.inputs.action == 'plan'
+        run: |
+          cd environments/${{ github.event.inputs.environment }}
+          terraform plan
+
+      - name: Terraform Apply
+        if: github.event.inputs.action == 'apply'
+        run: |
+          cd environments/${{ github.event.inputs.environment }}
+          terraform apply -auto-approve
+
+      - name: Terraform Destroy
+        if: github.event.inputs.action == 'destroy'
+        run: |
+          cd environments/${{ github.event.inputs.environment }}
+          terraform destroy -auto-approve
