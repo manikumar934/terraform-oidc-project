@@ -42,25 +42,23 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: terraform init -reconfigure
+      - name: Terraform Init
+        working-directory: environments/${{ github.event.inputs.environment }}
         run: |
-          cd environments/${{ github.event.inputs.environment }}
-          terraform init
+          rm -rf .terraform
+          terraform init -reconfigure
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
-        run: |
-          cd environments/${{ github.event.inputs.environment }}
-          terraform plan
+        working-directory: environments/${{ github.event.inputs.environment }}
+        run: terraform plan
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
-        run: |
-          cd environments/${{ github.event.inputs.environment }}
-          terraform apply -auto-approve
+        working-directory: environments/${{ github.event.inputs.environment }}
+        run: terraform apply -auto-approve
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
-        run: |
-          cd environments/${{ github.event.inputs.environment }}
-          terraform destroy -auto-approve
+        working-directory: environments/${{ github.event.inputs.environment }}
+        run: terraform destroy -auto-approve
