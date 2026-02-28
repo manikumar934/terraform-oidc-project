@@ -42,11 +42,15 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      # 🔥 Backend Reconfigure + Migration
       - name: Terraform Init
         working-directory: environments/${{ github.event.inputs.environment }}
         run: |
           rm -rf .terraform
-          terraform init -reconfigure
+          terraform init \
+            -reconfigure \
+            -migrate-state \
+            -force-copy
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
