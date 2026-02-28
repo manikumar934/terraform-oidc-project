@@ -51,17 +51,17 @@ jobs:
         working-directory: environments/${{ github.event.inputs.environment }}
         run: |
           rm -rf .terraform
-          terraform init -reconfigure
+          terraform init -reconfigure -upgrade
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
         working-directory: environments/${{ github.event.inputs.environment }}
-        run: terraform plan
+        run: terraform plan -refresh=false
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
         working-directory: environments/${{ github.event.inputs.environment }}
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -refresh=false
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
