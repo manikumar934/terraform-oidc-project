@@ -42,7 +42,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
+      - name: terraform init -reconfigure
         run: |
           cd environments/${{ github.event.inputs.environment }}
           terraform init
