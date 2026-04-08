@@ -33,6 +33,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # 🔥 ADD THIS BLOCK (SONARQUBE)
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v2
+        env:
+          SONAR_HOST_URL: http://<EC2-PUBLIC-IP>:9000
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # AWS Setup
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
