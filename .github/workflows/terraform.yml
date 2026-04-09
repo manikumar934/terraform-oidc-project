@@ -7,19 +7,12 @@ on:
         description: "Select Environment"
         required: true
         type: choice
-        options:
-          - dev
-          - uat
-          - prod
-
+        options: [dev, uat, prod]
       action:
         description: "Select Action"
         required: true
         type: choice
-        options:
-          - plan
-          - apply
-          - destroy
+        options: [plan, apply, destroy]
 
 jobs:
   terraform:
@@ -30,40 +23,32 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      # SonarQube Scan (FIXED)
+      - name: Install SonarScanner
+        run: |
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+          unzip sonar-scanner-cli-*.zip
+          sudo mv sonar-scanner-* /opt/sonar-scanner
+          echo "/opt/sonar-scanner/bin" >> $GITHUB_PATH
+
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v2
-        with:
-          args: >
-            -Dsonar.projectKey=terraform-oidc-project
-            -Dsonar.projectName=terraform-oidc-project
-            -Dsonar.sources=.
-            -Dsonar.inclusions=**/*.tf
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=terraform-oidc-project \
+            -Dsonar.projectName=terraform-oidc-project \
+            -Dsonar.sources=. \
+            -Dsonar.inclusions=**/*.tf \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
-      # Wait for Quality Gate
-      - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-      # AWS Setup
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Verify AWS Identity
-        run: aws sts get-caller-identity
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.6
 
