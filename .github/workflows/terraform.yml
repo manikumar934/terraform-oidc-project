@@ -33,24 +33,21 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # 🔍 Optional Debug (remove later)
-      - name: Debug Files
-        run: ls -la
-
-      # 🔥 FIXED SONARQUBE STEP
+      # SonarQube Scan
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v2
         with:
           args: >
-            -Dsonar.projectKey=my-app
-            -Dsonar.projectName=my-app
+            -Dsonar.projectKey=terraform-oidc-project
+            -Dsonar.projectName=terraform-oidc-project
             -Dsonar.sources=.
+            -Dsonar.inclusions=**/*.tf
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      # 🔥 OPTIONAL: FAIL PIPELINE IF CODE IS BAD
-      - name: Check Quality Gate
+      # Wait for Quality Gate
+      - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@v1
         timeout-minutes: 5
         env:
@@ -63,7 +60,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Verify AWS Identity (Debug)
+      - name: Verify AWS Identity
         run: aws sts get-caller-identity
 
       - name: Setup Terraform
@@ -74,18 +71,17 @@ jobs:
       - name: Terraform Init
         working-directory: environments/${{ github.event.inputs.environment }}
         run: |
-          rm -rf .terraform
           terraform init -reconfigure -upgrade
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
         working-directory: environments/${{ github.event.inputs.environment }}
-        run: terraform plan -replace=module.ec2.aws_instance.this
+        run: terraform plan
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
         working-directory: environments/${{ github.event.inputs.environment }}
-        run: terraform apply -auto-approve -replace=module.ec2.aws_instance.this
+        run: terraform apply -auto-approve
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
