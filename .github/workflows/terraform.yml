@@ -33,7 +33,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # SonarQube Scan
+      # SonarQube Scan (FIXED)
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v2
         with:
@@ -42,9 +42,8 @@ jobs:
             -Dsonar.projectName=terraform-oidc-project
             -Dsonar.sources=.
             -Dsonar.inclusions=**/*.tf
-        env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
       # Wait for Quality Gate
       - name: SonarQube Quality Gate
@@ -70,8 +69,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: environments/${{ github.event.inputs.environment }}
-        run: |
-          terraform init -reconfigure -upgrade
+        run: terraform init -reconfigure -upgrade
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
